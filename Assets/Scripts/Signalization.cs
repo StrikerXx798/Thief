@@ -1,7 +1,7 @@
-﻿using System;
+﻿using System.Collections;
 using UnityEngine;
 
-[RequireComponent(typeof(BoxCollider), typeof(AudioSource))]
+[RequireComponent(typeof(AudioSource))]
 public class Signalization : MonoBehaviour
 {
     private const float MinVolume = 0;
@@ -9,39 +9,64 @@ public class Signalization : MonoBehaviour
     private const float TransitionDuration = 2f;
 
     [SerializeField] private AudioSource _audioSource;
+    [SerializeField] private Trigger _trigger;
 
-    private bool _isTriggered;
+    private Coroutine _volumeRoutine;
 
     private void Awake()
     {
         _audioSource.volume = MinVolume;
     }
 
-    private void Update()
+    private void OnEnable()
     {
-        var speed = (_audioSource.volume - MaxVolume) / TransitionDuration;
-        var delta = Mathf.Abs(speed) * Time.deltaTime;
-
-        _audioSource.volume = Mathf.MoveTowards(_audioSource.volume, _isTriggered ? MaxVolume : MinVolume, delta);
-
-        if (Mathf.Approximately(_audioSource.volume, MinVolume))
-        {
-            _audioSource.Stop();
-        }
+        _trigger.TriggerEntered += OnTriggerEntered;
+        _trigger.TriggerExited += OnTriggerExited;
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnDisable()
     {
-        _isTriggered = true;
+        _trigger.TriggerEntered -= OnTriggerEntered;
+        _trigger.TriggerExited -= OnTriggerExited;
+    }
 
-        if (_audioSource.isPlaying == false)
-        {
+    private void OnTriggerEntered()
+    {
+        ChangeVolume(MaxVolume);
+    }
+
+    private void OnTriggerExited()
+    {
+        ChangeVolume(MinVolume);
+    }
+
+    private void ChangeVolume(float targetVolume)
+    {
+        if (_volumeRoutine != null)
+            StopCoroutine(_volumeRoutine);
+        
+        _volumeRoutine = StartCoroutine(ChangeVolumeRoutine(targetVolume));
+    }
+
+    private IEnumerator ChangeVolumeRoutine(float targetVolume)
+    {
+        if (targetVolume > _audioSource.volume && !_audioSource.isPlaying)
             _audioSource.Play();
-        }
-    }
 
-    private void OnTriggerExit(Collider other)
-    {
-        _isTriggered = false;
+        var currentVolume = _audioSource.volume;
+        var elapsed = 0f;
+
+        while (!Mathf.Approximately(_audioSource.volume, targetVolume))
+        {
+            elapsed += Time.deltaTime;
+            _audioSource.volume = Mathf.Lerp(currentVolume, targetVolume, elapsed / TransitionDuration);
+
+            yield return null;
+        }
+
+        _audioSource.volume = targetVolume;
+
+        if (Mathf.Approximately(targetVolume, MinVolume))
+            _audioSource.Stop();
     }
 }
