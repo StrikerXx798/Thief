@@ -20,14 +20,14 @@ public class Signalization : MonoBehaviour
 
     private void OnEnable()
     {
-        _trigger.TriggerEntered += OnTriggerEntered;
-        _trigger.TriggerExited += OnTriggerExited;
+        _trigger.OnEntered += OnTriggerEntered;
+        _trigger.OnExited += OnTriggerExited;
     }
 
     private void OnDisable()
     {
-        _trigger.TriggerEntered -= OnTriggerEntered;
-        _trigger.TriggerExited -= OnTriggerExited;
+        _trigger.OnEntered -= OnTriggerEntered;
+        _trigger.OnExited -= OnTriggerExited;
     }
 
     private void OnTriggerEntered()
@@ -44,7 +44,7 @@ public class Signalization : MonoBehaviour
     {
         if (_volumeRoutine != null)
             StopCoroutine(_volumeRoutine);
-        
+
         _volumeRoutine = StartCoroutine(ChangeVolumeRoutine(targetVolume));
     }
 

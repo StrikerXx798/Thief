@@ -4,16 +4,22 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider))]
 public class Trigger : MonoBehaviour
 {
-    public event Action TriggerEntered;
-    public event Action TriggerExited;
+    public event Action OnEntered;
+    public event Action OnExited;
 
-    private void OnTriggerEnter(Collider _)
+    private void OnTriggerEnter(Collider other)
     {
-        TriggerEntered?.Invoke();
+        if (other.TryGetComponent<Thief>(out _))
+        {
+            OnEntered?.Invoke();
+        }
     }
 
-    private void OnTriggerExit(Collider _)
+    private void OnTriggerExit(Collider other)
     {
-        TriggerExited?.Invoke();
+        if (other.TryGetComponent<Thief>(out _))
+        {
+            OnExited?.Invoke();
+        }
     }
 }
